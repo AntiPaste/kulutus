@@ -1,0 +1,61 @@
+body {
+	padding-bottom: 50px;
+}
+
+a {
+	outline: none !important;
+}
+
+a img {
+	border: 0 !important;
+	outline: none !important;
+}
+
+.overflow-ellipsis {
+	text-overflow: ellipsis;
+	overflow: hidden;
+}
+
+li.active .remove-category:hover {
+	color: #000 !important;
+}
+
+.remove-category {
+	position: absolute !important;
+	top: 0;
+	right: 0;
+}
+
+.remove-category:hover {
+	color: #000 !important;
+}
+
+#main-pie {
+	margin: 40px auto 0 auto;
+	height: 300px;
+	width: 400px;
+}
+
+#month-pie {
+	margin: 40px auto 0 auto;
+	height: 300px;
+	width: 400px;
+}
+
+#select-month {
+	margin: 15px 0 0 5px;
+	min-width: 100px;
+}
+
+#add-transactions-file {
+	margin: 0 auto;
+}
+
+.add-transactions-description {
+	padding: 10px 0;
+}
+
+.add-transactions-category {
+	margin-bottom: 5px !important;
+	margin-right: 5px !important;
+}
