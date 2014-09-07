@@ -251,6 +251,10 @@ function removeCategory(categoryID) {
 	reloadCategories();
 }
 
+function dateToInteger(date) {
+	return new Date(date.split('.').reverse().join('-')).getTime();
+}
+
 function reloadCategories() {
 	var categories = getCategories();
 	var transactions = getTransactions();
@@ -299,7 +303,25 @@ function reloadCategories() {
 		$.each(transactions, function(index, transaction) {
 			if (transaction.category != key) return true;
 			
-			$(tbody).append($('<tr />').addClass('draggable ui-widget-content').append($('<td />').text(transaction.date)).append($('<td />').text(transaction.description)).append($('<td />').text(transaction.amount.toFixed(2) + '€')).data('id', index).attr('data-id', index));
+			var row = $('<tr />').addClass('draggable ui-widget-content').append($('<td />').text(transaction.date)).append($('<td />').text(transaction.description)).append($('<td />').text(transaction.amount.toFixed(2) + '€')).data('id', index).attr('data-id', index);
+			var thisTime = dateToInteger(transaction.date);
+			var rows = $(tbody).find('tr > td:nth-child(1)');
+			if (rows.length <= 0 || thisTime > dateToInteger($(rows[0]).text())) {
+				$(tbody).prepend(row);
+				return true;
+			}
+			
+			for (var i = 1; i < rows.length; i++) {
+				var first = dateToInteger($(rows[i - 1]).text());
+				var second = dateToInteger($(rows[i]).text());
+				
+				if (first >= thisTime && second <= thisTime) {
+					$(rows[i - 1]).parent().after(row);
+					return true;
+				}
+			}
+			
+			$(tbody).append(row);
 		});
 		
 		$(thead).append(tr);
@@ -318,6 +340,8 @@ function reloadCategories() {
 			var transactions = getTransactions();
 			var categoryID = $(event.target).data('id');
 			var transactionID = $(ui.draggable.context).data('id');
+			
+			console.log(categoryID, transactionID);
 			
 			if (moveAll) {
 				$.each(transactions, function(key, transaction) {
