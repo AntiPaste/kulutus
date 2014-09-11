@@ -32,14 +32,14 @@ li.active .remove-category:hover {
 
 #main-pie {
 	margin: 40px auto 0 auto;
-	height: 300px;
-	width: 400px;
+	height: 400px;
+	width: 500px;
 }
 
 #month-pie {
 	margin: 40px auto 0 auto;
-	height: 300px;
-	width: 400px;
+	height: 400px;
+	width: 500px;
 }
 
 #select-month {
