@@ -100,7 +100,7 @@ function displayPie(element, data) {
 					formatter: labelFormatter,
 					background: {
 						opacity: 0.8,
-						background: 'black',
+						color: '#000',
 					},
 				},
 			},
