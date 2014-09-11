@@ -20,7 +20,7 @@ $(document).ready(function() {
 	});
 	
 	$.each(pieData, function(index, data) {
-		pieData[index] = pieData[index] / months.length;
+		pieData[index].data = pieData[index].data / months.length;
 	});
 	
 	months.sort(function(a, b) {
@@ -41,19 +41,27 @@ $(document).ready(function() {
 	$('#select-month').on('change', function() {
 		var month = $('#select-month').val();
 		var pieData = new Array();
+		var sequentialPieData = new Array();
+		var sum = 0;
 		
 		$.each(transactions, function(index, transaction) {
-			if (transaction.date.substr(3).replace('.', '/') != month) {
-				pieData[transaction.category] = {};
-				return true;
-			}
+			if (transaction.date.substr(3).replace('.', '/') != month) return true;
 			
 			if (typeof pieData[transaction.category] == 'undefined') {
 				pieData[transaction.category] = { label: categories[transaction.category].name, data: transaction.amount };
 			} else {
 				pieData[transaction.category].data += transaction.amount;
 			}
+			
+			sum += transaction.amount;
 		});
+		
+		$.each(pieData, function(index, data) {
+			if (typeof data == 'undefined') return true;
+			sequentialPieData.push(data);
+		});
+		
+		pieData = sequentialPieData;
 		
 		if (pieData.length <= 0) {
 			$('#month-pie').text('Ei tapahtumia');
@@ -62,6 +70,7 @@ $(document).ready(function() {
 		}
 		
 		$('#month-title').text(month);
+		$('#month-sum').text(sum.toFixed(2) + '€');
 		$('<a />').attr({ href: '#month-tab', 'data-toggle': 'tab' }).tab('show');
 	});
 	
