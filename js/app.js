@@ -99,7 +99,7 @@ function displayPie(element, data) {
 					radius: 3/4,
 					formatter: labelFormatter,
 					background: {
-						opacity: 0.5,
+						opacity: 1,
 					},
 				},
 			},
