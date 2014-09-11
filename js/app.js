@@ -39,7 +39,10 @@ $(document).ready(function() {
 		var pieData = new Array();
 		
 		$.each(transactions, function(index, transaction) {
-			if (transaction.date.substr(3).replace('.', '/') != month) return true;
+			if (transaction.date.substr(3).replace('.', '/') != month) {
+				pieData[transaction.category] = {};
+				return true;
+			}
 			
 			if (typeof pieData[transaction.category] == 'undefined') {
 				pieData[transaction.category] = { label: categories[transaction.category].name, data: transaction.amount };
