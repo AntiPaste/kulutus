@@ -19,6 +19,10 @@ $(document).ready(function() {
 		if ($.inArray(date, months) == -1) months.push(date);
 	});
 	
+	$.each(pieData, function(index, data) {
+		pieData[index] = pieData[index] / months.length;
+	});
+	
 	months.sort(function(a, b) {
 		return b - a;
 	});
