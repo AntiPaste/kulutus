@@ -99,9 +99,9 @@ function displayPie(element, data) {
 					radius: 3/4,
 					formatter: labelFormatter,
 					background: {
-						opacity: 0.8,
-						color: '#000',
+						opacity: 0;
 					},
+					color: '#000',
 				},
 			},
 		},
