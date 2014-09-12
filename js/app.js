@@ -352,13 +352,14 @@ function reloadCategories() {
 	$('#categories li').droppable({
 		tolerance: 'touch',
 		drop: function(event, ui) {
-			var moveAll = confirm('Haluatko siirtää kaikki vastaavat tapahtumatkin?');
 			var categories = getCategories();
 			var transactions = getTransactions();
 			var categoryID = $(event.target).data('id');
 			var transactionID = $(ui.draggable.context).data('id');
-			
-			console.log(categoryID, transactionID);
+
+			if (typeof categoryID == 'undefined' || typeof transactionID == 'undefined') return true;
+
+			var moveAll = confirm('Haluatko siirtää kaikki vastaavat tapahtumatkin?');
 			
 			if (moveAll) {
 				$.each(transactions, function(key, transaction) {
@@ -384,6 +385,7 @@ function reloadCategories() {
 			localStorage.setItem('categories', JSON.stringify(categories));
 			localStorage.setItem('transactions', JSON.stringify(transactions));
 			
+			$(ui.draggable.context).remove();
 			$(ui.draggable).remove();
 			reloadCategories();
 		}
