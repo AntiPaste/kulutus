@@ -73,16 +73,15 @@ $(document).ready(function() {
 		});
 		
 		pieData = sequentialPieData;
+		$('#month-title').text(month);
+		$('#month-sum').text(sum.toFixed(2) + '€');
+		$('<a />').attr({ href: '#month-tab', 'data-toggle': 'tab' }).tab('show');
 		
 		if (pieData.length <= 0) {
 			$('#month-pie').text('Ei tapahtumia');
 		} else {
 			displayPie('#month-pie', pieData);
 		}
-		
-		$('#month-title').text(month);
-		$('#month-sum').text(sum.toFixed(2) + '€');
-		$('<a />').attr({ href: '#month-tab', 'data-toggle': 'tab' }).tab('show');
 	});
 	
 	$('#add-category-input').keypress(function(e) {
