@@ -3,12 +3,14 @@ $(document).ready(function() {
 	
 	var categories = getCategories();
 	var transactions = getTransactions();
+	var sequentialPieData = new Array();
 	var pieData = new Array();
 	var months = new Array();
 	
 	$.each(transactions, function(index, transaction) {
+		var categoryIndex = findCategoryById(transaction.category);
 		if (typeof pieData[transaction.category] == 'undefined') {
-			pieData[transaction.category] = { label: categories[transaction.category].name, data: transaction.amount };
+			pieData[transaction.category] = { label: categories[categoryIndex].name, data: transaction.amount };
 		} else {
 			pieData[transaction.category].data += transaction.amount;
 		}
@@ -18,6 +20,13 @@ $(document).ready(function() {
 		
 		if ($.inArray(date, months) == -1) months.push(date);
 	});
+	
+	$.each(pieData, function(index, data) {
+		if (typeof data == 'undefined') return true;
+		sequentialPieData.push(data);
+	});
+	
+	pieData = sequentialPieData;
 	
 	$.each(pieData, function(index, data) {
 		pieData[index].data = pieData[index].data / months.length;
@@ -47,8 +56,10 @@ $(document).ready(function() {
 		$.each(transactions, function(index, transaction) {
 			if (transaction.date.substr(3).replace('.', '/') != month) return true;
 			
+			var categoryIndex = findCategoryById(transaction.category);
+			
 			if (typeof pieData[transaction.category] == 'undefined') {
-				pieData[transaction.category] = { label: categories[transaction.category].name, data: transaction.amount };
+				pieData[transaction.category] = { label: categories[categoryIndex].name, data: transaction.amount };
 			} else {
 				pieData[transaction.category].data += transaction.amount;
 			}
@@ -134,17 +145,20 @@ function handleUpload(event) {
 			$('.add-transactions-description:first').removeClass('hidden');
 			
 			$.each(categories, function(index, category) {
-				$('#add-transactions-body').append($('<button />').attr('type', 'button').addClass('btn btn-primary add-transactions-category').data('id', index).text(category.name).click(function() {
+				$('#add-transactions-body').append($('<button />').attr('type', 'button').addClass('btn btn-primary add-transactions-category').data('id', category.id).text(category.name).click(function() {
 					var transactions = getTransactions();
 					var categories = getCategories();
 					
 					var transaction = $('.add-transactions-description:first').data('transaction');
 					transaction.category = $(this).data('id');
-					categories[transaction.category].contains.push(transaction.description);
+					
+					var categoryIndex = findCategoryById(transaction.category);
+					categories[categoryIndex].contains.push(transaction.description);
 					
 					transactions.push(transaction);
-					localStorage.setItem('transactions', JSON.stringify(transactions));
-					localStorage.setItem('categories', JSON.stringify(categories));
+					
+					saveTransactions(transactions);
+					saveCategories(categories);
 					
 					$('.add-transactions-description:first').remove();
 					
@@ -188,7 +202,7 @@ function parseTransactions(data) {
 		amount = Math.abs(amount);
 		
 		$.each(categories, function(index, object) {
-			if ($.inArray(description, object.contains) != -1) category = index;
+			if ($.inArray(description, object.contains) != -1) category = object.id;
 		});
 		
 		if (category == null) {
@@ -210,7 +224,7 @@ function parseTransactions(data) {
 		transactions.push({ category: category, date: date, amount: amount, description: description, original: original });
 	});
 	
-	localStorage.setItem('transactions', JSON.stringify(transactions));
+	saveTransactions(transactions);
 	return unknown;
 }
 
@@ -233,26 +247,69 @@ function getCategories() {
 	return categories;
 }
 
+function saveTransactions(transactions) {
+	localStorage.setItem('transactions', JSON.stringify(transactions));
+}
+
+function saveCategories(categories) {
+	localStorage.setItem('categories', JSON.stringify(categories));
+}
+
+function getNextCategoryID() {
+	var nextCategoryID = localStorage.getItem('next-category');
+	if (nextCategoryID == null) {
+		nextCategoryID = 0;
+		localStorage.setItem('next-category', 0);
+	}
+	
+	return nextCategoryID;
+}
+
+function incrementNextCategoryID() {
+	var nextCategoryID = getNextCategoryID();
+	localStorage.setItem('next-category', parseInt(nextCategoryID) + 1);
+	return nextCategoryID;
+}
+
 function addCategory(name) {
 	var categories = getCategories();
-	categories.push({ name: name, contains: new Array() });
-	localStorage.setItem('categories', JSON.stringify(categories));
+	var nextCategoryID = incrementNextCategoryID();
 	
+	categories.push({ id: nextCategoryID, order: nextCategoryID, name: name, contains: new Array() });
+	
+	saveCategories(categories);
 	reloadCategories();
+}
+
+function findCategoryById(id) {
+	var categories = getCategories();
+	var categoryIndex;
+	
+	$.each(categories, function(index, category) {
+		if (categories[index].id == id) {
+			categoryIndex = index;
+			return false;
+		}
+	});
+	
+	return categoryIndex;
 }
 
 function renameCategory(categoryID, name) {
 	var categories = getCategories();
-	categories[categoryID].name = name;
-	localStorage.setItem('categories', JSON.stringify(categories));
+	var categoryIndex = findCategoryById(categoryID);
 	
+	categories[categoryIndex].name = name;
+	
+	saveCategories(categories);
 	reloadCategories();
 }
 
 function removeCategory(categoryID) {
 	var categories = getCategories();
 	var transactions = getTransactions();
-	categories.splice(categoryID, 1);
+	var categoryIndex = findCategoryById(categoryID);
+	categories.splice(categoryIndex, 1);
 	
 	transactions = $.grep(transactions, function(transaction, key) {
 		if (transaction.category == categoryID) {
@@ -262,9 +319,8 @@ function removeCategory(categoryID) {
 		return true;
 	});
 	
-	localStorage.setItem('transactions', JSON.stringify(transactions));
-	localStorage.setItem('categories', JSON.stringify(categories));
-	
+	saveTransactions(transactions);
+	saveCategories(categories);
 	reloadCategories();
 }
 
@@ -279,10 +335,14 @@ function reloadCategories() {
 	$('#categories li').remove();
 	$('.category-tab').remove();
 	
+	categories.sort(function(a, b) {
+		return a.order - b.order;
+	});
+	
 	$.each(categories, function(key, data) {
 		var name = data.name;
 		var safeName = name.toLowerCase().replace(' ', '-').replace(/\W/g, '');
-		var element = $('<li />').data('id', key);
+		var element = $('<li />').addClass('ui-state-default').data('id', data.id);
 		$(element).append($('<a />').attr({ href: '#tab-' + safeName, 'data-toggle': 'tab' }).text(name).dblclick(function() {
 			var name = $(this).text();
 			$(this).html('');
@@ -318,7 +378,7 @@ function reloadCategories() {
 		$(tr).append($('<th />').text('Summa'));
 		
 		$.each(transactions, function(index, transaction) {
-			if (transaction.category != key) return true;
+			if (transaction.category != data.id) return true;
 			
 			var row = $('<tr />').addClass('draggable ui-widget-content').append($('<td />').text(transaction.date)).append($('<td />').text(transaction.description)).append($('<td />').text(transaction.amount.toFixed(2) + '€')).data('id', index).attr('data-id', index);
 			var thisTime = dateToInteger(transaction.date);
@@ -349,13 +409,32 @@ function reloadCategories() {
 		$('.draggable').draggable({ helper: 'clone', revert: 'invalid' });
 	});
 	
+	$('#categories').sortable({
+		update: function(event, ui) {
+			var order = 0;
+			var categories = getCategories();
+			
+			$('#categories li').each(function() {
+				var categoryID = $(this).data('id');
+				var categoryIndex = findCategoryById(categoryID);
+				
+				categories[categoryIndex].order = order;
+				order++;
+			});
+			
+			saveCategories(categories);
+		}
+	});
+	
 	$('#categories li').droppable({
 		tolerance: 'touch',
+		accept: '.draggable',
 		drop: function(event, ui) {
 			var categories = getCategories();
 			var transactions = getTransactions();
 			var categoryID = $(event.target).data('id');
 			var transactionID = $(ui.draggable.context).data('id');
+			var categoryIndex = findCategoryById(categoryID);
 
 			if (typeof categoryID == 'undefined' || typeof transactionID == 'undefined') return true;
 
@@ -377,16 +456,16 @@ function reloadCategories() {
 					});
 				});
 				
-				categories[categoryID].contains.push(transactions[transactionID].description);
+				categories[categoryIndex].contains.push(transactions[transactionID].description);
 			} else {
 				transactions[transactionID].category = categoryID;
 			}
 			
-			localStorage.setItem('categories', JSON.stringify(categories));
-			localStorage.setItem('transactions', JSON.stringify(transactions));
-			
 			$(ui.draggable.context).remove();
 			$(ui.draggable).remove();
+			
+			saveTransactions(transactions);
+			saveCategories(categories);
 			reloadCategories();
 		}
 	});
